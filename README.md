@@ -24,7 +24,7 @@ The application was developed and tested in the following environment:
 
 ## Environment Configuration
 
-Make sure all the requirements are met. See [System Requirements](System Requirements) section
+Make sure all the requirements are met. See **[System Requirements](https://github.com/offmindby/revolut-test/tree/main?tab=readme-ov-file#system-requirements)** section
 The application uses environment variables for configuration. You can set these up in the file .env.
 See file env.example
 
