@@ -1,5 +1,3 @@
-# Requirements: fastapi, uvicorn, boto3, python-dotenv
-# Run with: python main.py
 """
 FastAPI web application with two endpoints:
 - PUT /hello/<username>: Set a date of birth for a username (body: {"dateOfBirth": "YYYY-MM-DD"})
@@ -88,6 +86,60 @@ except Exception as e:
     logger.warning("Application will continue but DynamoDB operations may fail")
 
 app = FastAPI()
+
+@app.get("/hello/healthcheck")
+async def health_check():
+    """Health check endpoint for ECS and ALB.
+
+    This endpoint verifies:
+    1. Application is running
+    2. DynamoDB connection is working
+    3. Basic functionality is operational
+    """
+    try:
+        # Test DynamoDB connection by describing the table
+        table.load()
+
+        # Return healthy status
+        return {
+            "status": "healthy",
+            "service": "revolut-birthday-api",
+            "timestamp": datetime.now().isoformat(),
+            "checks": {
+                "application": "ok",
+                "database": "ok"
+            }
+        }
+    except ClientError as e:
+        logger.error(f"Health check failed - DynamoDB error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "unhealthy",
+                "service": "revolut-birthday-api",
+                "timestamp": datetime.now().isoformat(),
+                "checks": {
+                    "application": "ok",
+                    "database": "error"
+                },
+                "error": str(e)
+            }
+        )
+    except Exception as e:
+        logger.error(f"Health check failed - unexpected error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "unhealthy",
+                "service": "revolut-birthday-api",
+                "timestamp": datetime.now().isoformat(),
+                "checks": {
+                    "application": "error",
+                    "database": "unknown"
+                },
+                "error": str(e)
+            }
+        )
 
 class HelloRequest(BaseModel):
     dateOfBirth: date
